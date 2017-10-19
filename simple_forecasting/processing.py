@@ -11,7 +11,7 @@ from sklearn.metrics import mean_squared_error, classification_report
 import matplotlib.pylab as plt
 import datetime as dt
 import time
-
+import Alpha
 
 def load_snp_returns():
     f = open('table.csv', 'rb').readlines()[1:]
@@ -31,10 +31,11 @@ def load_snp_returns():
 
 def load_snp_close():
     import pandas as pd
-    data=pd.read_csv('table.csv')
-
-    raw_data=data['Close']
-    raw_dates=data['Date']
+    data=pd.read_csv('baba.csv')
+    raw_data=data['close']
+    raw_dates=data['timestamp']
+    raw_data = np.flip(raw_data,0)
+    raw_dates = np.flip(raw_dates,0)
 
     return raw_data, raw_dates
 
@@ -63,7 +64,7 @@ def split_into_chunks(data, train, predict, step, binary=True):
             break
         X.append(x_i)
         Y.append(y_i)
-
+        
     return X, Y
 
 
@@ -85,11 +86,21 @@ def create_Xt_Yt(X, y, percentage=0.8,scale=True,binary=False):
     
     X_train = X[0:int(len(X) * percentage)]
     Y_train = y[0:int(len(y) * percentage)]
-    
+       
     if scale:X_train = preprocessing.scale(X_train)
     if scale and not binary:Y_train = preprocessing.scale(Y_train)
     
     #X_train, Y_train = shuffle_in_unison(X_train, Y_train)
 
     return X_train, X_test, Y_train, Y_test
+
+def get_data(s):
+    alpha = Alpha.Alpha()
+    data=alpha.GetData(function='TIME_SERIES_INTRADAY',symbol=s,interval='15min',outputsize='full')
+    raw_data=data['close']
+    raw_dates=data['timestamp']
+    raw_data = np.flip(raw_data,0)
+    raw_dates = np.flip(raw_dates,0)
+
+    return raw_data, raw_dates
 

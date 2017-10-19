@@ -38,14 +38,14 @@ class TrainingHistory(Callback):
 
 
 
-TRAIN_SIZE = 2
+TRAIN_SIZE = 30
 TARGET_TIME = 1
 LAG_SIZE = 1
 EMB_SIZE = 1
 
 print('Data loading..')
-timeseries, dates = p.get_data('APPL')
-dates = [dt.datetime.strptime(d,'%Y-%m-%d %H:%M:%S').date() for d in dates]
+timeseries, dates = p.get_data('AMD')
+dates = [dt.datetime.strptime(d,'%Y-%m-%d').date() for d in dates]
 #plt.plot(dates, timeseries)
 
 X, Y = p.split_into_chunks(timeseries, TRAIN_SIZE, TARGET_TIME, LAG_SIZE, binary=False)
@@ -59,10 +59,10 @@ X_trainp, X_testp, Y_trainp, Y_testp = p.create_Xt_Yt(Xp, Yp, percentage=0.9,sca
 
 print('Building model...')
 model = Sequential()
-model.add(Dense(256, input_shape = (TRAIN_SIZE, )))
+model.add(Dense(512, input_shape = (TRAIN_SIZE, )))
 model.add(Activation('relu'))
 model.add(Dropout(0.25))
-model.add(Dense(128))
+model.add(Dense(256))
 model.add(Activation('relu'))
 model.add(Dense(1))
 model.add(Activation('linear'))
