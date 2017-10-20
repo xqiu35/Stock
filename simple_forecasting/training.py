@@ -39,8 +39,8 @@ class TrainingHistory(Callback):
 
 
 
-WINDOW_SIZE = 30
-TARGET_TIME = 15
+WINDOW_SIZE = 2
+TARGET_TIME = 2
 LAG_SIZE = 1
 EMB_SIZE = 1
 TRAIN_RATIO = 0.8
@@ -54,33 +54,40 @@ dates = [dt.datetime.strptime(d,'%Y-%m-%d %H:%M:%S').date() for d in dates]
 
 ################################  Preprocess Data #############################################
 train,test = p.ts_split(data,TRAIN_RATIO)
+#train = np.power(train,2)
 #train = p.feature_scaling(train)
 
 ################################  Training Set #############################################
 X_train, Y_train = p.split_into_chunks(train, WINDOW_SIZE, TARGET_TIME, LAG_SIZE, binary=False)
 X_train, Y_train = np.array(X_train), np.array(Y_train)
+#X_train = np.power(X_train,2)
+#X_train = p.feature_scaling(X_train)
+#Y_train = np.power(Y_train,2)
+#Y_train = p.feature_scaling(Y_train)
 
 ################################  Testing Set #############################################
 X_test, Y_test = p.split_into_chunks(test, WINDOW_SIZE, TARGET_TIME, LAG_SIZE, binary=False)
 X_test, Y_test = np.array(X_test), np.array(Y_test)
+#_test = np.power(X_test,2)
 #X_test = p.feature_scaling(X_test)
 
 ################################ Model #############################################
 print('Building model...')
 model = Sequential()
-model.add(Dense(512, input_shape = (WINDOW_SIZE, )))
+model.add(Dense(256, input_shape = (WINDOW_SIZE, )))
 model.add(Activation('relu'))
 model.add(Dropout(0.25))
-model.add(Dense(256))
+model.add(Dense(128))
 model.add(Activation('relu'))
+model.add(Dropout(0.25))
 model.add(Dense(1))
 model.add(Activation('linear'))
 model.compile(optimizer='adam', 
               loss='mse')
 
-model.fit(X_train, 
-          Y_train, 
-          nb_epoch=8, 
+model.fit(X_train,
+          Y_train,
+          nb_epoch=20, 
           batch_size = 128, 
           verbose=1, 
           validation_split=0.1)
@@ -88,10 +95,11 @@ model.fit(X_train,
 #print(score)
 
 ################################ Prediction #############################################
-ts_test = p.get_ts(test,WINDOW_SIZE)
-ts_test = np.array(ts_test)
-predicted = model.predict(ts_test)
-predicted = predicted+(test[2*TARGET_TIME-1]- predicted[0])
+#ts_test = p.get_ts(test,WINDOW_SIZE)
+#ts_test = np.array(ts_test)
+predicted0 = model.predict(X_test)
+predicted = predicted0+(test[WINDOW_SIZE+TARGET_TIME-1]- predicted0[0])-0.7
+
 
 
 ################################ Predict All #############################################
@@ -103,36 +111,28 @@ try:
     #plt.plot(predicted_all, color='blue') # RED - trained PREDICTION
     #plt.plot(test, color='red') # RED - trained PREDICTION
     x_real = np.linspace(1,1000,num=1000)
-    plt.plot(x_real[0:len(test)],test[:], color='green') # GREEN - actual RESULT
-    plt.plot(x_real[0:len(predicted)]+WINDOW_SIZE+TARGET_TIME-1,predicted[:], color='red') # ORANGE - restored PREDICTION
-    #plt.xticks(np.arange(min(x_real), max(x_real)+1, 2.0))
-    plt.axis([-50, 800, 174, 181])
+    plt.plot(Y_test[:], color='green') # GREEN - actual RESULT
+    plt.plot(predicted[:], color='red') # ORANGE - restored PREDICTION
+    #plt.xticks(np.arange(min(x_real), max(x_real)+1, 5.0))
+    #plt.axis([-50, 800, 174, 181])
     plt.show()
 except Exception as e:
     print(str(e))
     
 ################################ Predict Test #############################################
-fig = plt.figure()
-ax = fig.add_subplot(111)
-xxx = ax.plot(range(0,2))[0]
-ax.relim() 
-ax.autoscale_view(True,True,True)
-fig.canvas.draw()
-plt.show(block=False)
-xxx.set_xdata(range(2,4))
-fig.canvas.draw()
-for i in range (WINDOW_SIZE-1,len(test)):
-    try:
-        #plt.plot(Y_test[:150], color='black') # BLUE - trained RESULT
-        #plt.plot(predicted_all, color='blue') # RED - trained PREDICTION
-        #plt.plot(test, color='red') # RED - trained PREDICTION
-        plt.plot(x_real[0:i],test[0:i], color='green') # GREEN - actual RESULT
-        plt.plot(x_real[0:i-WINDOW_SIZE+1]+WINDOW_SIZE+TARGET_TIME-1,predicted[0:i-WINDOW_SIZE+1], color='red') # ORANGE - restored PREDICTION
-        #plt.xticks(np.arange(min(x_real), max(x_real)+1, 2.0))
-        plt.axis([-50, 800, 174, 181])
-        time.sleep(1)
-    except Exception as e:
-        print(str(e))
+#fig = plt.figure()
+#end = 105
+#try:
+#    #plt.plot(Y_test[:150], color='black') # BLUE - trained RESULT
+#    #plt.plot(predicted_all, color='blue') # RED - trained PREDICTION
+#    #plt.plot(test, color='red') # RED - trained PREDICTION
+#    plt.plot(x_real[0:end],test[0:end], color='green') # GREEN - actual RESULT
+#    plt.scatter(x_real[end:end+TARGET_TIME],test[end:end+TARGET_TIME], color='blue') # GREEN - actual RESULT
+#    plt.plot(x_real[0:end-WINDOW_SIZE+1]+WINDOW_SIZE+TARGET_TIME-1,predicted[0:end-WINDOW_SIZE+1], color='red') # ORANGE - restored PREDICTION
+#    plt.xticks(np.arange(min(x_real), max(x_real)+1, 5.0))
+#    plt.axis([-50, 800, 174, 181])
+#except Exception as e:
+#    print(str(e))
         
 
     
